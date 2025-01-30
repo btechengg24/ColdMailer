@@ -1,21 +1,62 @@
 import React from "react";
+import { User } from "firebase/auth";
+import { Button } from "primereact/button";
+import { Avatar } from "primereact/avatar";
 
-const Navbar: React.FC = () => {
+import { signInWithGoogle, signOutUser } from "../services/authServices";
+
+interface NavbarProps {
+  user?: User | null;
+}
+
+const Navbar: React.FC<NavbarProps> = ({ user }) => {
+  const handleSignIn = async () => {
+    console.log("Signin button clicked");
+    const userCredential = await signInWithGoogle();
+    if (userCredential) {
+      console.log("User signed in handleSignIn");
+    } else {
+      console.log("Error signing in");
+    }
+  };
+  const handleSignOut = async () => {
+    try {
+      // console.log("Signout button clicked");
+      await signOutUser();
+      console.log("User signed in handleSignOut");
+    } catch (error) {
+      console.log("Error signing out handleSignOut");
+    }
+  };
+
   return (
-    <div className="bg-blue-600 text-white p-4 mt-0 shadow-md">
-      <div className="max-w-6xl mx-auto flex justify-between items-center">
-        <h1 className="text-2xl font-semibold">ColdEmailer</h1>
-        <div className="flex items-center space-x-4">
-          <div className="text-sm">
-            <span>Welcome,</span>
-            <span className="font-semibold">G Likhit Reddy</span>
-          </div>
-          <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-            <span className="font-semibold">GL</span>
-          </div>
+    <nav className="flex justify-between items-center px-6 py-4 bg-white shadow-md">
+      <h1 className="text-2xl font-bold text-gray-800">Cold Mailer</h1>
+
+      {user ? (
+        <div className="flex items-center gap-4">
+          <Avatar
+            image={user.photoURL || ""}
+            shape="circle"
+            className="shadow-md"
+          />
+          <span className="font-medium text-gray-800">{user.displayName}</span>
+          <Button
+            label="Logout"
+            icon="pi pi-sign-out"
+            className="p-button-text"
+            onClick={handleSignOut}
+          />
         </div>
-      </div>
-    </div>
+      ) : (
+        <Button
+          label="Sign In"
+          icon="pi pi-sign-in"
+          className="p-button-outlined"
+          onClick={handleSignIn}
+        />
+      )}
+    </nav>
   );
 };
 
