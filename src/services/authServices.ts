@@ -15,22 +15,36 @@ const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 googleProvider.addScope("https://www.googleapis.com/auth/gmail.send");
 
-let accessToken: string | undefined;
+// Store the entire UserCredential object
+const storeUserCredential = (userCredential: UserCredential) => {
+  localStorage.setItem("googleUserCredential", JSON.stringify(userCredential));
+};
+
+// Retrieve stored UserCredential
+const getStoredUserCredential = (): UserCredential | null => {
+  const userData = localStorage.getItem("googleUserCredential");
+  return userData ? (JSON.parse(userData) as UserCredential) : null;
+};
+
+// Clear stored UserCredential
+const clearStoredUserCredential = () => {
+  localStorage.removeItem("googleUserCredential");
+};
+
 // Sign in with Google OAuth
 export const signInWithGoogle = async (): Promise<UserCredential | null> => {
   try {
     const userCredential = await signInWithPopup(auth, googleProvider);
     console.log("User signed in signInWithGoogle");
 
-    const credential = GoogleAuthProvider.credentialFromResult(userCredential);
-    if (!credential) throw new Error("No credential found");
+    storeUserCredential(userCredential);
 
-    accessToken = credential.accessToken; // ✅ Get OAuth token
-    console.log("Google OAuth Access Token:", accessToken);
+    // const credential = GoogleAuthProvider.credentialFromResult(userCredential);
+    // if (!credential) throw new Error("No credential found");
 
     return userCredential;
   } catch (error) {
-    console.error("Error signing in with Google: ", error);
+    console.error("Error signing in signInWithGoogle", error);
     return null;
   }
 };
@@ -40,34 +54,33 @@ export const signOutUser = async (): Promise<void> => {
   try {
     await signOut(auth);
     console.log("User signed out.");
+    clearStoredUserCredential();
   } catch (error) {
     console.error("Error signing out: ", error);
   }
 };
 
-// Get the current authenticated user
+// Get the currently stored user from credentials
 export const getCurrentUser = () => {
-  return auth.currentUser;
+  const storedCredential = getStoredUserCredential();
+  return storedCredential?.user || null;
 };
 
-// Fetch the current access token
-export const getAccessToken = async (): Promise<string | null> => {
-  const user = getCurrentUser();
+// Get the OAuth access token when needed
+export const getGoogleAccessToken = async (): Promise<string | null> => {
+  const storedCredential = getStoredUserCredential();
 
-  if (!user) {
-    console.error("No user signed in.");
-    return null;
-  }
-  try {
-    const token = await user.getIdToken();
-    return token;
-  } catch (error) {
-    console.error("Error getting access token: ", error);
-    return null;
-  }
-};
+  if (!storedCredential) {
+    console.log("No stored credentials. Signing in again...");
 
-// Fetch the OAuth access token for Gmail API
-export const getGoogleAccessToken = async () => {
-  return accessToken;
+    const userCredential = await signInWithGoogle();
+    if (!userCredential) return null;
+
+    const credential = GoogleAuthProvider.credentialFromResult(userCredential);
+    return credential?.accessToken || null;
+  }
+
+  // Try extracting access token from stored credentials
+  const credential = GoogleAuthProvider.credentialFromResult(storedCredential);
+  return credential?.accessToken || null;
 };
