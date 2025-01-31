@@ -12,8 +12,6 @@ const firebaseConfig = {
   measurementId: env.VITE_MEASUREMENT_ID,
 };
 
-console.log("firebase initiliased");
-
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
