@@ -20,8 +20,10 @@ const HomePage: React.FC = () => {
   const [showModal, setShowModal] = useState<boolean>(false);
   const [recipientEmail, setRecipientEmail] = useState<string>("");
 
+  const currentUser = getCurrentUser();
   const toast = useRef<Toast>(null);
 
+  // Handle file upload
   const handleFileUpload = (e: any) => {
     const file = e.files[0];
     if (!file) return;
@@ -142,8 +144,8 @@ const HomePage: React.FC = () => {
       return;
     }
     // console.log("in handleSendEmail email and content not issue");
+
     // Get the current authenticated user
-    const currentUser = getCurrentUser();
     if (!currentUser) {
       setErrorMessage("You need to sign in with Google first.");
       return;
